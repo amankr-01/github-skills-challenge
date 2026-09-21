@@ -69,3 +69,20 @@ The observations at `10:00` through `10:04` and `10:07` through `10:09` appear n
 
 - At `10:05`, the response time increases to 610 ms and the log reports `Payment service timeout` at `ERROR` level. This is unusual even though CPU and memory utilization remain below the anomaly thresholds.
 - At `10:06`, the response time increases to 640 ms, CPU utilization reaches 94%, memory utilization reaches 91%, and the log reports `Database connection timeout` at `ERROR` level. This is the strongest indication of service degradation and may explain the slow payment requests.
+
+## Task 3: Anomaly Detection Report
+
+The provided `AnomalyDetector` was used with its default thresholds: response time above 500 ms, CPU above 80%, and memory above 80%. Warning and error log levels are also treated as concerning events. The pipeline processed all 10 operational records and distinguished the normal records from two anomalous records.
+
+### Detected Anomalies
+
+- `2026-09-20T10:05:00`: Flagged for high response time (`610 ms`) and a concerning `ERROR` log. The message was `Payment service timeout`.
+- `2026-09-20T10:06:00`: Flagged for high response time (`640 ms`), high CPU utilization (`94%`), high memory utilization (`91%`), and a concerning `ERROR` log. The message was `Database connection timeout`.
+
+The producer publishes both events to the `anomaly-events` topic, and the consumer receives both events. The final result is 10 records processed, 2 anomalies detected, and 2 events consumed. The eight records with `INFO` logs and normal metric values were not flagged.
+
+### Detection Review
+
+Both expected anomalies were detected, including the timeout at `10:05` and the combined performance and database problem at `10:06`. No normal event was incorrectly flagged in this dataset, and no expected anomaly was missed after including concerning `ERROR` log levels in the detector.
+
+One limitation is that the detector uses fixed thresholds and does not learn the service's normal baseline or account for trends. A possible improvement would be to calculate a baseline from historical data and detect gradual changes or service-specific deviations automatically.
