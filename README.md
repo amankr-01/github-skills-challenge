@@ -133,3 +133,22 @@ The original assessment code contained three workflow problems. Each was reprodu
 - **Verification:** Running `PYTHONPATH=.:src python3 src/aiops_pipeline.py` processed 10 records, detected 2 anomalies, and consumed 2 events. The final output included both timestamps and their detection reasons.
 
 No unrelated components were replaced. The existing detector, producer, topic, consumer, and pipeline classes continue to provide the workflow architecture.
+
+## Task 6: End-to-End Pipeline Execution
+
+The corrected workflow was executed from the repository terminal with:
+
+```bash
+PYTHONPATH=.:src python3 src/aiops_pipeline.py
+```
+
+The execution verified the complete path:
+
+1. **Operational data:** 10 records were loaded from `data/service_data.json`.
+2. **Anomaly detection:** 2 abnormal observations were identified.
+3. **Event generation:** Each abnormal observation produced a structured `ANOMALY` event with timestamp, service, source data, and detection reasons.
+4. **Producer and topic:** The 2 events were published to the shared `anomaly-events` topic.
+5. **Consumer:** Both published events were consumed successfully.
+6. **AIOps processing:** The consumed events were returned by `run_pipeline()` and displayed by the command-line output.
+
+The final output identified two operational issues in `payment-service`: a payment service timeout at `10:05` and a database connection timeout at `10:06`. The result was `10` records processed, `2` anomalies detected, and `2` events consumed.
