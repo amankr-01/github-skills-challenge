@@ -86,3 +86,23 @@ The producer publishes both events to the `anomaly-events` topic, and the consum
 Both expected anomalies were detected, including the timeout at `10:05` and the combined performance and database problem at `10:06`. No normal event was incorrectly flagged in this dataset, and no expected anomaly was missed after including concerning `ERROR` log levels in the detector.
 
 One limitation is that the detector uses fixed thresholds and does not learn the service's normal baseline or account for trends. A possible improvement would be to calculate a baseline from historical data and detect gradual changes or service-specific deviations automatically.
+
+## Task 4: AIOps Event Flow Verification
+
+The event flow was verified with the anomaly at `2026-09-20T10:05:00`:
+
+1. `AnomalyDetector` examined the record and created an `ANOMALY` event because the response time was `610 ms` and the log level was `ERROR`.
+2. `EventProducer.publish()` accepted the event and passed it to the producer's topic.
+3. `EventTopic` stored the event in the in-memory `anomaly-events` topic.
+4. `EventConsumer.consume()` read the event from that same topic.
+5. The consumer returned the received event, including its timestamp, service, type, source record, and detection reasons.
+6. `run_pipeline()` returned the consumed event in `events_consumed`, which is the downstream AIOps output displayed by the pipeline.
+
+### Component Roles
+
+- **Event/message**: A structured anomaly record containing the service, timestamp, original source data, and reasons for detection.
+- **Producer**: Publishes each detected anomaly event to the event topic.
+- **Topic**: Provides the in-memory channel that stores and transfers published events.
+- **Consumer**: Reads events from the topic and makes them available to the downstream pipeline result.
+
+The single-event verification passed from detector to producer, topic, consumer, and AIOps result. The complete dataset verification also passed: 10 records processed, 2 anomaly events produced, and the same 2 events consumed and returned by the pipeline.
