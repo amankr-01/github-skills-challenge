@@ -150,5 +150,30 @@ The execution verified the complete path:
 4. **Producer and topic:** The 2 events were published to the shared `anomaly-events` topic.
 5. **Consumer:** Both published events were consumed successfully.
 6. **AIOps processing:** The consumed events were returned by `run_pipeline()` and displayed by the command-line output.
-
 The final output identified two operational issues in `payment-service`: a payment service timeout at `10:05` and a database connection timeout at `10:06`. The result was `10` records processed, `2` anomalies detected, and `2` events consumed.
+
+## Task 7: Reproduction Steps
+
+Another user can reproduce the demonstration as follows:
+
+1. Open the repository in a Python-enabled environment and change to the repository root.
+2. Install the test dependency if needed:
+
+	```bash
+	pip install -r requirements.txt
+	```
+
+3. Run the complete AIOps workflow:
+
+	```bash
+	PYTHONPATH=.:src python3 src/aiops_pipeline.py
+	```
+
+4. Confirm the output reports 10 records processed, 2 anomalies detected, and 2 events consumed. The output should identify the anomalies at `2026-09-20T10:05:00` and `2026-09-20T10:06:00`.
+5. Run the automated tests to verify the individual workflow components:
+
+	```bash
+	PYTHONPATH=.:src python3 -m pytest -q
+	```
+
+The expected test result is 8 passing tests. The `PYTHONPATH=.:src` setting supports both the package-style imports used by the tests and the direct module imports used by `src/aiops_pipeline.py`.
