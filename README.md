@@ -106,3 +106,30 @@ The event flow was verified with the anomaly at `2026-09-20T10:05:00`:
 - **Consumer**: Reads events from the topic and makes them available to the downstream pipeline result.
 
 The single-event verification passed from detector to producer, topic, consumer, and AIOps result. The complete dataset verification also passed: 10 records processed, 2 anomaly events produced, and the same 2 events consumed and returned by the pipeline.
+
+## Task 5: Troubleshooting and Corrections
+
+The original assessment code contained three workflow problems. Each was reproduced or identified from the component code, corrected within the existing architecture, and then verified by executing the affected component again.
+
+### 1. Error logs were missed
+
+- **Affected component:** `src/anomaly_detector.py`
+- **Cause:** The detector checked only for `log_level == "WARNING"`, but the supplied anomalous records use `ERROR`.
+- **Correction:** Treat both `WARNING` and `ERROR` as concerning log levels and include that reason in the generated event.
+- **Verification:** An `ERROR`-only test record produced an anomaly with the reason `Concerning log level`. The dataset anomalies at `10:05` and `10:06` now include this reason.
+
+### 2. The producer used the wrong topic
+
+- **Affected component:** `src/aiops_pipeline.py` and the producer/topic connection.
+- **Cause:** The producer published to a topic named `service-events`, while the consumer read from a separate topic named `anomaly-events`.
+- **Correction:** Create one shared `anomaly-events` topic and pass that same topic instance to both `EventProducer` and `EventConsumer`.
+- **Verification:** The full pipeline published both detected events to the shared topic, and the consumer received both events.
+
+### 3. No events reached the downstream result
+
+- **Affected component:** `src/aiops_pipeline.py` and the consumer-to-pipeline handoff.
+- **Cause:** Because the consumer was attached to the empty second topic, `events_consumed` was empty even though the detector found two anomalies.
+- **Correction:** Keep the consumer on the producer's shared topic so `consumer.consume()` returns the published events to `run_pipeline()`.
+- **Verification:** Running `PYTHONPATH=.:src python3 src/aiops_pipeline.py` processed 10 records, detected 2 anomalies, and consumed 2 events. The final output included both timestamps and their detection reasons.
+
+No unrelated components were replaced. The existing detector, producer, topic, consumer, and pipeline classes continue to provide the workflow architecture.
